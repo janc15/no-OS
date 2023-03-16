@@ -114,15 +114,6 @@ int8_t ltc4306_init(struct ltc4306_dev **device,
 		return -1;
 
 	status = no_os_i2c_init(&dev->i2c_desc, &init_param.i2c_init);
-	if((ltc4306_get_register_value(dev,ltc4306_ADR_ID) & ltc4306_ID_MAN_ID) !=
-	    ltc4306_ID) {
-		status = -1;
-	}
-	/* Enable internal oscillator and set clock frequency to 500 kHz. */
-	ltc4306_set_register_value(dev,
-				   ltc4306_ADR_GENERAL_CFG_B,
-				   ltc4306_GENERAL_CFG_B_OSC_EN|
-				   ltc4306_GENERAL_CFG_B_CORE_FREQ(3));
 
 	*device = dev;
 
@@ -154,13 +145,14 @@ uint8_t ltc4306_identify_device_id(struct ltc4306_dev *dev,
 				   uint8_t register_address_adr2)
 {
 	//initiate variables
-	static uint8_t read_data_adr0[2]   = {0, 0};
-	static uint8_t read_data_adr1[2]   = {0, 0};
-	static uint8_t read_data_adr2[2]   = {0, 0};
+	static uint8_t device_id = 0;
 	static uint8_t register_value_adr0 = 0;
 	static uint8_t register_value_adr1 = 0;
 	static uint8_t register_value_adr2 = 0;
-	static uint8_t device_id = 0;
+	
+	/**static uint8_t read_data_adr0[2]   = {0, 0};
+	static uint8_t read_data_adr1[2]   = {0, 0};
+	static uint8_t read_data_adr2[2]   = {0, 0};
 
 	//read register address: ADR0
 	read_data_adr0[0] = register_address_adr0;

@@ -55,10 +55,10 @@
 #define LTC4306_ID		0x10	// Manufacturer ID
 
 /* Register address definitions */
-#define LTC4306_REGISTER0				0x00
-#define LTC4306_REGISTER1		       	0x01
-#define LTC4306_REGISTER2           	0x02
-#define LTC4306_REGISTER3            	0x03
+#define LTC4306_CTRL_REG0				0x00
+#define LTC4306_CTRL_REG1		       	0x01
+#define LTC4306_CTRL_REG2           	0x02
+#define LTC4306_CTRL_REG3            	0x03
 #define LTC4306_MASS_WRITE            	0xBA
 #define LTC4306_ALERT_RESPONSE          0x19
 #define LTC4306_0		            	0x80
@@ -141,17 +141,6 @@ void LTC4306_set_pin_state(struct LTC4306_dev *dev,
 
 /*! Initializes keyboard decoder. */
 void LTC4306_init_key(struct LTC4306_dev *dev,
-		      uint8_t pmod_port);
-
-/*! Decodes the key on the Pmod-KYPD. */
-uint8_t LTC4306_key_decode(uint8_t reg,
-			   uint8_t event_type,
-			   uint8_t pmod_port);
-
-/*! Locks the LTC4306 and requests Password for unlock. */
-void LTC4306_key_lock(struct LTC4306_dev *dev,
-		      uint8_t first_event,
-		      uint8_t second_event,
 		      uint8_t pmod_port);
 
 #endif	/* __LTC4306_H__ */
