@@ -138,9 +138,15 @@ int adf4371_write(struct adf4371_dev *dev,
 
     uint8_t write_data[3];
 
-    write_data[0] = data_val;
-    write_data[1] = control_reg & 0xFF;
-    write_data[2] = control_reg >> 8;
+	if (control_reg < 0x00 || control_reg == 0x02 || (control_reg > 0x06 && control_reg < 0x10) || 
+        control_reg == 0x13 || control_reg == 0x21 || control_reg == 0x29 || (control_reg > 0x3A && control_reg < 0x3D) ||
+		(control_reg > 0x42 && control_reg < 0x47) || (control_reg > 0x47 && control_reg < 0x52) || 
+		(control_reg > 0x52 && control_reg < 0x6E) || (control_reg > 0x73 && control_reg < 0x7C) || control_reg > 0x7C)
+        return -1;
+
+    write_data[0] = control_reg & 0xFF;
+    write_data[1] = control_reg >> 8;
+    write_data[2] = data_val;
 
 	return no_os_spi_write_and_read(dev->spi_desc, write_data, 3);
 }
@@ -163,6 +169,12 @@ int adf4371_read(struct adf4371_dev *dev,
 		  uint8_t *data_val)
 {
 	uint8_t read_data[2];
+
+	if (control_reg < 0x00 || control_reg == 0x02 || (control_reg > 0x06 && control_reg < 0x10) || 
+        control_reg == 0x13 || control_reg == 0x21 || control_reg == 0x29 || (control_reg > 0x3A && control_reg < 0x3D) ||
+		(control_reg > 0x42 && control_reg < 0x47) || (control_reg > 0x47 && control_reg < 0x52) || 
+		(control_reg > 0x52 && control_reg < 0x6E) || (control_reg > 0x73 && control_reg < 0x7C) || control_reg > 0x7C)
+        return -1;
 
 	read_data[0] = control_reg;
     read_data[1] = (control_reg >> 8) | 0x80;

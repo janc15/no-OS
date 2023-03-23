@@ -142,8 +142,8 @@ int ada4250_write(struct ada4250_dev *dev,
         control_reg == 0x03 || control_reg > 0x1A)
         return -1;
 
-    write_data[0] = data_val;
-    write_data[1] = control_reg;
+    write_data[0] = control_reg >> 1;
+    write_data[1] = data_val;
 
 	return no_os_spi_write_and_read(dev->spi_desc, write_data, 2);
 }
@@ -165,22 +165,22 @@ int ada4250_read(struct ada4250_dev *dev,
 		  uint16_t control_reg,
 		  uint8_t *data_val)
 {
-	uint8_t read_data[2];
+	uint8_t read_data;
 
     if (control_reg < 0x00 || (control_reg > 0x05 && control_reg < 0x18) || 
         control_reg == 0x03 || control_reg > 0x1A)
         return -1;
 
-    control_reg |= 1 >> 1;
+    control_reg |= 1 >> 0;
     
-	read_data[0] = control_reg;
+	read_data = control_reg;
 
 	ret = no_os_spi_write_and_read(dev->spi_desc, read_data, 1);
 
     if (ret)
         return ret;
 
-    *data_val = read_data[0];
+    *data_val = read_data;
 
     return 0;
 }

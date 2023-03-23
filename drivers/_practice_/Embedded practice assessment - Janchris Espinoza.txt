@@ -1,0 +1,23 @@
+*ada4250
+
+-goods ung write. mukang nacover naman ung mga invalid na addresses based sa datasheet
+
+-ung order ng data_val at control_reg di pa naman tayo sure kung pano masesend out sa device so goods naman un. pero kung unang tingin, mukang una dapat ung may rw at address bago ung data_val.
+
+-oks den na may checkign for control register. ung sa gagawin na alng sa control reg ung mukang nalilito ka pa. for this usually wpede mo reviewhin ung bitwise operations at masking. pero oks pa den naman ung flow so goods yan.
+	- ung |= 1 >> 1 prang >> 1 lang den halos. tama nama nna 	may shfiting pero ung | na value hindi dapat 1
+
+-if 1 variable lang naman, ung read_data pwedeng hindi na array. pwede sya variable na lang tas pass mo as pointer dun sa no os function (&read_data) tas ung return is maging *data_val = read_data na lang. review lang sa pointers and usage nito (for variables and arrays).
+
+
+
+*adf4371
+
+-kulang ng register limits checking both read and write
+-sa write, ung order aat dapt ay ung address muna ang nasa 0 at 1 index nung array instead na ung data. usually pag ano ung order from left to right sa datasheet, ganun dapat from 0 to N sa index ng array pero at least gets mo naman ung concept.
+
+-goods ung ginawa mo dun sa read function nya, tama ung mask value na nakaOR dun sa shifter control_reg. prang ganito den ung tinutukoy ko na sana ginawa sa 4250.
+
+
+
+
