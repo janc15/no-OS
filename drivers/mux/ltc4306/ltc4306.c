@@ -56,7 +56,7 @@
  *
  * @return None.
 *******************************************************************************/
-void ltc4306_set_register_value(struct ltc4306_dev *dev,
+int ltc4306_set_register_value(struct ltc4306_dev *dev,
 				uint8_t register_address,
 				uint8_t register_value)
 {
@@ -64,7 +64,8 @@ void ltc4306_set_register_value(struct ltc4306_dev *dev,
 
 	write_data[0] = register_address;
 	write_data[1] = register_value;
-	no_os_i2c_write(dev->i2c_desc, write_data, 2, 1);
+	
+	return no_os_i2c_write(dev->i2c_desc, write_data, 2, 1);
 }
 
 /***************************************************************************//**
@@ -75,7 +76,8 @@ void ltc4306_set_register_value(struct ltc4306_dev *dev,
  *
  * @return register_value  - Value of the register.
 *******************************************************************************/
-uint8_t ltc4306_get_register_value(struct ltc4306_dev *dev,
+
+int ltc4306_get_register_value(struct ltc4306_dev *dev,
 				   uint8_t register_address)
 {
 	static uint8_t read_data[2]   = {0, 0};
@@ -261,4 +263,178 @@ uint8_t ltc4306_identify_device_id(struct ltc4306_dev *dev,
 		device_id = 0xB4;
 
 	return device_id;
+}
+
+/***************************************************************************//**
+ * @brief Free the resources allocated by ltc4306_init().
+ *
+ * @param dev - The device structure.
+ * @param register_address - Address of the register
+ * @param connect_to_bus - Bus (can be any value from 1 to 4) the user wants to connect to.
+ *
+ * @return 0 in case of success, negative error code otherwise.
+*******************************************************************************/
+int ltc4306_connect_to_downstream_channel(struct ltc4306_dev *dev,
+				   uint8_t register_address, uint8_t connect_to_bus)
+{
+	uint8_t read_data[2]   = {0, 0};
+	uint8_t *register_value;
+	uint8_t bus_state_check;
+
+	//reads register address and checks if it is Register 3 (0x03)
+	read_data[0] = register_address;
+
+	if (read_data[0] != 0x03)
+		return -1;
+
+	//gets register value; AND to 0x0F to only first 4 bits
+	no_os_i2c_write(dev->i2c_desc, read_data, 1, 0);
+	no_os_i2c_read(dev->i2c_desc, read_data, 1, 1);
+	*register_value = read_data;
+
+	bus_state_check = *(register_value + 1);
+	bus_state_check &= 0x0F;
+	*(register_value + 2) = 0x03;
+	
+	// first if statement masks bit depending on what bus you want to connect
+	if (connect_to_bus == 0x01)
+		bus_state_check &= 0x08;
+		//checks bus logic state, if high, will set bus state fet high to connect to bus
+			if (bus_state_check == 0x08)
+				*(register_value + 1) |= 0x20;
+				return no_os_i2c_write(dev->i2c_desc, read_data, 2, 1);
+	
+	else if (connect_to_bus == 0x02)
+		bus_state_check &= 0x04;
+			if (bus_state_check == 0x04)
+				*(register_value + 1) |= 0x40;
+				return no_os_i2c_write(dev->i2c_desc, read_data, 2, 1);
+
+	else if (connect_to_bus == 0x03)
+		bus_state_check &= 0x02;
+			if (bus_state_check == 0x02)
+				*(register_value + 1) |= 0x20;
+				return no_os_i2c_write(dev->i2c_desc, read_data, 2, 1);
+
+	else if (connect_to_bus == 0x04)
+		bus_state_check &= 0x01;
+			if (bus_state_check == 0x01)
+				*(register_value + 1) |= 0x10;
+				return no_os_i2c_write(dev->i2c_desc, read_data, 2, 1);
+}
+
+/***************************************************************************//**
+ * @brief Free the resources allocated by ltc4306_init().
+ *
+ * @param dev - The device structure.
+ * @param upstream_en - Set true to enable upstream rise time accelerator.
+ * @param downstream_en - Set true to enable downstream rise time accelerator.
+ *
+ * @return 0 in case of success, negative error code otherwise.
+*******************************************************************************/
+int ltc4306_upstream_downstream_accelerator_en(struct ltc4306_dev *dev, bool upstream_en, bool downstream_en)
+{
+	static uint8_t write_data[2] = {0, 0};
+	*ptr = write_data;
+	*(ptr + 1) = 0x01;
+
+	if (upstream_en == true && downstream_en == true)
+		*(ptr + 2) |= 0xC0;
+		return no_os_i2c_write(dev->i2c_desc, write_data, 2, 1);
+
+	else if (upstream_en == false && downstream_en == true)
+		*(ptr + 2) |= 0x40;
+		return no_os_i2c_write(dev->i2c_desc, write_data, 2, 1);
+
+	if (upstream_en == true && downstream_en == false)
+		*(ptr + 2) |= 0x80;
+		return no_os_i2c_write(dev->i2c_desc, write_data, 2, 1);
+
+	else
+		return no_os_i2c_write(dev->i2c_desc, write_data, 2, 1);
+
+}
+
+/***************************************************************************//**
+ * @brief Free the resources allocated by ltc4306_init().
+ *
+ * @param dev - The device structure.
+ * @param device_address - Address of slave device that sent interrupt signal.
+ *
+ * @return 0 in case of success, negative error code otherwise.
+*******************************************************************************/
+int ltc4306_alert_response(struct ltc4306_dev *dev, uint8_t device_address)
+{
+	static uint8_t read_data[2] = {0, 0};
+	static uint8_t register_value = 0;
+
+	read_data[0] = 0x19;
+	read_data[1] = device_address;
+	no_os_i2c_write(dev->i2c_desc, read_data, 1, 0);
+	no_os_i2c_read(dev->i2c_desc, read_data, 1, 1);
+	register_value = read_data[0];
+
+	return register_value;
+}
+
+/***************************************************************************//**
+ * @brief Free the resources allocated by ltc4306_init().
+ *
+ * @param dev - The device structure.
+ * @param mass_write_en - Set true to enable mass write address.
+ *
+ * @return 0 in case of success, negative error code otherwise.
+*******************************************************************************/
+int ltc4306_mass_write_en(struct ltc4306_dev *dev, bool mass_write_en)
+{
+	uint8_t register_value;
+
+	register_value = ltc4306_get_register_value(dev, 0x02);
+
+	register_value |= 0x04;
+
+	return ltc4306_set_register_value(dev, 0xBA, register_value);
+}
+
+/***************************************************************************//**
+ * @brief Free the resources allocated by ltc4306_init().
+ *
+ * @param dev - The device structure.
+ * @param gpio1_mode_config - Set true to configure GPIO1 to input mode; false for output mode.
+ * @param gpio2_mode_config - Set true to configure GPIO2 to input mode; false for output mode.
+ * @param gpio1_output_mode_config - Set true to configure GPIO1 output mode to push-pull; false for open-drain pull-down.
+ * @param gpio2_output_mode_config - Set true to configure GPIO2 output mode to push-pull; false for open-drain pull-down.
+ * @return 0 in case of success, negative error code otherwise.
+*******************************************************************************/
+int ltc4306_gpio_mode_configure(struct ltc4306_dev *dev, bool gpio1_mode_config, bool gpio2_mode_config, 
+								bool gpio1_output_mode_config, bool gpio2_output_mode_config)
+{
+	uint8_t register_address = 0x02;
+	uint8_t register_value = 0;
+
+	register_value = ltc4306_get_register_value(dev, register_address);
+	
+	if (gpio1_mode_config)
+	{
+		register_value |= 0x80;
+		if (gpio1_output_mode_config)
+			register_value |= 0x10;
+		else
+			register_value &= 0xEF;
+	}
+	else 
+		register_value &= 0x6F;
+	
+	if (gpio2_mode_config)
+	{
+		register_value |= 0x40;
+		if (gpio2_output_mode_config)
+			register_value |= 0x08;
+		else
+			register_value &= 0xF7;
+	}
+	else 
+		register_value &= 0xB7;
+	
+	return ltc4306_set_register_value(dev, register_address, register_value);
 }
