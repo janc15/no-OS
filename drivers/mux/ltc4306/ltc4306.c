@@ -140,187 +140,102 @@ int32_t ltc4306_remove(struct ltc4306_dev *dev)
 	return ret;
 }
 
-
-uint8_t ltc4306_identify_device_id(struct ltc4306_dev *dev,
-				   uint8_t register_address_adr0,
-				   uint8_t register_address_adr1,
-				   uint8_t register_address_adr2)
+/***************************************************************************//**
+ * @brief Free the resources allocated by ltc4306_init().
+ *
+ * @param init_param - The structure that contains the device initial
+ * 		       parameters.
+ * @param register_address_desc - Used to configure slave address (value = 0 to 26)
+ *
+ * @return 0 in case of success, negative error code otherwise.
+*******************************************************************************/
+uint8_t ltc4306_identify_device_id(struct ltc4306_init_param init_param, uint8_t register_address_desc)
 {
 	//initiate variables
-	static uint8_t device_id = 0;
-	static uint8_t register_value_adr0 = 0;
-	static uint8_t register_value_adr1 = 0;
-	static uint8_t register_value_adr2 = 0;
-	
-	/**static uint8_t read_data_adr0[2]   = {0, 0};
-	static uint8_t read_data_adr1[2]   = {0, 0};
-	static uint8_t read_data_adr2[2]   = {0, 0};
+	uint8_t register_input = register_address_desc;
+	uint8_t device_address = 0;
 
-	//read register address: ADR0
-	read_data_adr0[0] = register_address_adr0;
-	no_os_i2c_write(dev->i2c_desc, read_data_adr0, 1, 0);
-	no_os_i2c_read(dev->i2c_desc, read_data_adr0, 1, 1);
-	register_value_adr0 = read_data_adr0[0];
+	if (register_input < 0 || register_input > 26)
+		return -EINVAL;
 
-	//read register address: ADR1
-	read_data_adr1[0] = register_address_adr1;
-	no_os_i2c_write(dev->i2c_desc, read_data_adr1, 1, 0);
-	no_os_i2c_read(dev->i2c_desc, read_data_adr1, 1, 1);
-	register_value_adr1 = read_data_adr1[0];
+	if (register_input >= 0 && register_input <= 7)
+		device_address = 0x80 + (register_input * 0x01);
 
-	//read register address: ADR2
-	read_data_adr2[0] = register_address_adr2;
-	no_os_i2c_write(dev->i2c_desc, read_data_adr2, 1, 0);
-	no_os_i2c_read(dev->i2c_desc, read_data_adr2, 1, 1);
-	register_value_adr2 = read_data_adr2[0];
+	else if (register_input <= 8 && register_input >= 15)
+	{
+		register_input -= 10;
+		device_address = 0x90 + (register_input * 0x01);
+	}
 
-/***************************************************************************//**
-	 set condition for device_id value
-	 H = 2
-	 L = 1
-	 NC = 0
-*******************************************************************************/
+	else if (register_input <= 16 && register_input >= 23)
+	{
+		register_input -= 16;
+		device_address = 0xA0 + (register_input * 0x01);
+	}
 
-	if (register_value_adr2==1 && register_value_adr1==0 && register_value_adr0==1)
-		device_id = 0x80;
+	else
+	{
+		register_input -= 24;
+		device_address = 0xB0 + (register_input * 0x01);
+	}
 
-	else if (register_value_adr2==1 && register_value_adr1==2 && register_value_adr0==0)
-		device_id = 0x82;
-
-	else if (register_value_adr2==1 && register_value_adr1==0 && register_value_adr0==0)
-		device_id = 0x84;
-
-	else if (register_value_adr2==1 && register_value_adr1==0 && register_value_adr0==2)
-		device_id = 0x86;
-
-	else if (register_value_adr2==1 && register_value_adr1==1 && register_value_adr0==1)
-		device_id = 0x88;
-
-	else if (register_value_adr2==1 && register_value_adr1==2 && register_value_adr0==2)
-		device_id = 0x8A;
-
-	else if (register_value_adr2==1 && register_value_adr1==1 && register_value_adr0==0)
-		device_id = 0x8C;
-
-	else if (register_value_adr2==1 && register_value_adr1==1 && register_value_adr0==2)
-		device_id = 0x8E;
-
-	else if (register_value_adr2==0 && register_value_adr1==0 && register_value_adr0==1)
-		device_id = 0x90;
-
-	else if (register_value_adr2==0 && register_value_adr1==2 && register_value_adr0==0)
-		device_id = 0x92;
-
-	else if (register_value_adr2==0 && register_value_adr1==0 && register_value_adr0==0)
-		device_id = 0x94;
-
-	else if (register_value_adr2==0 && register_value_adr1==0 && register_value_adr0==2)
-		device_id = 0x96;
-
-	else if (register_value_adr2==0 && register_value_adr1==1 && register_value_adr0==1)
-		device_id = 0x98;
-
-	else if (register_value_adr2==0 && register_value_adr1==2 && register_value_adr0==2)
-		device_id = 0x9A;
-
-	else if (register_value_adr2==0 && register_value_adr1==1 && register_value_adr0==0)
-		device_id = 0x9C;
-
-	else if (register_value_adr2==0 && register_value_adr1==1 && register_value_adr0==2)
-		device_id = 0x9E;
-
-	else if (register_value_adr2==2 && register_value_adr1==0 && register_value_adr0==1)
-		device_id = 0xA0;
-
-	else if (register_value_adr2==2 && register_value_adr1==2 && register_value_adr0==0)
-		device_id = 0xA2;
-
-	else if (register_value_adr2==2 && register_value_adr1==0 && register_value_adr0==0)
-		device_id = 0xA4;
-
-	else if (register_value_adr2==2 && register_value_adr1==0 && register_value_adr0==2)
-		device_id = 0xA6;
-
-	else if (register_value_adr2==2 && register_value_adr1==1 && register_value_adr0==1)
-		device_id = 0xA8;
-		
-	else if (register_value_adr2==2 && register_value_adr1==2 && register_value_adr0==2)
-		device_id = 0xAA;
-
-	else if (register_value_adr2==2 && register_value_adr1==1 && register_value_adr0==0)
-		device_id = 0xAC;
-
-	else if (register_value_adr2==2 && register_value_adr1==1 && register_value_adr0==2)
-		device_id = 0xAE;
-	
-	else if (register_value_adr2==2 && register_value_adr1==2 && register_value_adr0==1)
-		device_id = 0xB0;
-
-	else if (register_value_adr2==1 && register_value_adr1==2 && register_value_adr0==1)
-		device_id = 0xB2;
-
-	else if (register_value_adr2==0 && register_value_adr1==2 && register_value_adr0==1)
-		device_id = 0xB4;
-
-	return device_id;
+	return device_address;
 }
 
 /***************************************************************************//**
  * @brief Free the resources allocated by ltc4306_init().
  *
  * @param dev - The device structure.
- * @param register_address - Address of the register
  * @param connect_to_bus - Bus (can be any value from 1 to 4) the user wants to connect to.
  *
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_connect_to_downstream_channel(struct ltc4306_dev *dev,
-				   uint8_t register_address, uint8_t connect_to_bus)
+int ltc4306_connect_to_downstream_channel(struct ltc4306_dev *dev, uint8_t connect_to_bus)
 {
-	uint8_t read_data[2]   = {0, 0};
-	uint8_t *register_value;
+	uint8_t message[2] = {0, 0};
+	uint8_t *ptr;
 	uint8_t bus_state_check;
 
-	//reads register address and checks if it is Register 3 (0x03)
-	read_data[0] = register_address;
+	*ptr = message;
+	*(ptr+1) = ltc4306_get_register_value(dev, 0x03);
 
-	if (read_data[0] != 0x03)
-		return -1;
-
-	//gets register value; AND to 0x0F to only first 4 bits
-	no_os_i2c_write(dev->i2c_desc, read_data, 1, 0);
-	no_os_i2c_read(dev->i2c_desc, read_data, 1, 1);
-	*register_value = read_data;
-
-	bus_state_check = *(register_value + 1);
+	bus_state_check = *(ptr + 1);
 	bus_state_check &= 0x0F;
-	*(register_value + 2) = 0x03;
+	*ptr = 0x03;
 	
 	// first if statement masks bit depending on what bus you want to connect
 	if (connect_to_bus == 0x01)
 		bus_state_check &= 0x08;
 		//checks bus logic state, if high, will set bus state fet high to connect to bus
 			if (bus_state_check == 0x08)
-				*(register_value + 1) |= 0x20;
-				return no_os_i2c_write(dev->i2c_desc, read_data, 2, 1);
-	
+			{
+				*(ptr + 1) |= 0x80;
+				return ltc4306_set_register_value(dev, message[0], message[1]);
+			}
+
 	else if (connect_to_bus == 0x02)
 		bus_state_check &= 0x04;
 			if (bus_state_check == 0x04)
-				*(register_value + 1) |= 0x40;
-				return no_os_i2c_write(dev->i2c_desc, read_data, 2, 1);
+			{
+				*(ptr + 1) |= 0x40;
+				return ltc4306_set_register_value(dev, message[0], message[1]);
+			}
 
 	else if (connect_to_bus == 0x03)
 		bus_state_check &= 0x02;
 			if (bus_state_check == 0x02)
-				*(register_value + 1) |= 0x20;
-				return no_os_i2c_write(dev->i2c_desc, read_data, 2, 1);
+			{
+				*(ptr + 1) |= 0x20;
+				return ltc4306_set_register_value(dev, message[0], message[1]);
+			}
 
 	else if (connect_to_bus == 0x04)
 		bus_state_check &= 0x01;
 			if (bus_state_check == 0x01)
-				*(register_value + 1) |= 0x10;
-				return no_os_i2c_write(dev->i2c_desc, read_data, 2, 1);
+			{
+				*(ptr + 1) |= 0x10;
+				return ltc4306_set_register_value(dev, message[0], message[1]);
+			}
 }
 
 /***************************************************************************//**
@@ -335,24 +250,47 @@ int ltc4306_connect_to_downstream_channel(struct ltc4306_dev *dev,
 int ltc4306_upstream_downstream_accelerator_en(struct ltc4306_dev *dev, bool upstream_en, bool downstream_en)
 {
 	static uint8_t write_data[2] = {0, 0};
+	uint8_t *ptr;
+	uint8_t temp = 0;
+
 	*ptr = write_data;
-	*(ptr + 1) = 0x01;
+	*ptr = 0x01;
+	temp = write_data[1];
 
-	if (upstream_en == true && downstream_en == true)
-		*(ptr + 2) |= 0xC0;
-		return no_os_i2c_write(dev->i2c_desc, write_data, 2, 1);
-
-	else if (upstream_en == false && downstream_en == true)
-		*(ptr + 2) |= 0x40;
-		return no_os_i2c_write(dev->i2c_desc, write_data, 2, 1);
-
-	if (upstream_en == true && downstream_en == false)
-		*(ptr + 2) |= 0x80;
-		return no_os_i2c_write(dev->i2c_desc, write_data, 2, 1);
-
+	if (upstream_en == true)
+	{
+		temp &= 0x80;
+		if (temp == 0x00)
+			*(ptr + 1) |= 0x80;
+		if (temp == 0x80)
+			*(ptr + 1) &= 0xFF;
+	}
 	else
-		return no_os_i2c_write(dev->i2c_desc, write_data, 2, 1);
+	{
+		temp &= 0x80;
+		if (temp == 0x00)
+			*(ptr + 1) &= 0xFF;
+		if (temp == 0x80)
+			*(ptr + 1) &= 0x7F;
+	}
 
+	if (downstream_en == true)
+	{
+	temp &= 0x40;
+		if (temp == 0x00)
+			*(ptr + 1) |= 0x40;
+		if (temp == 0x40)
+			*(ptr + 1) &= 0xFF;
+	}
+	else
+	{
+	temp &= 0x40;
+		if (temp == 0x00)
+			*(ptr + 1) |= 0xFF;
+		if (temp == 0x40)
+			*(ptr + 1) &= 0xBF;
+	}
+	return ltc4306_set_register_value(dev, write_data[0], write_data[1]);
 }
 
 /***************************************************************************//**
@@ -370,6 +308,9 @@ int ltc4306_alert_response(struct ltc4306_dev *dev, uint8_t device_address)
 
 	read_data[0] = 0x19;
 	read_data[1] = device_address;
+
+	ltc4306_identify_device_id(init_param, read_data[1]);
+
 	no_os_i2c_write(dev->i2c_desc, read_data, 1, 0);
 	no_os_i2c_read(dev->i2c_desc, read_data, 1, 1);
 	register_value = read_data[0];
@@ -388,11 +329,27 @@ int ltc4306_alert_response(struct ltc4306_dev *dev, uint8_t device_address)
 int ltc4306_mass_write_en(struct ltc4306_dev *dev, bool mass_write_en)
 {
 	uint8_t register_value;
+	uint8_t temp;
 
 	register_value = ltc4306_get_register_value(dev, 0x02);
+	temp = register_value;
+	temp &= 0x04;
 
-	register_value |= 0x04;
-
+	if (mass_write_en == true)
+	{
+		if (temp == 0x00)
+			register_value |= 0x04;
+		
+		if (temp == 0x04)
+			register_value &= 0xFF;
+	}
+	else
+	{
+		if (temp == 0x00)
+			register_value &= 0xFF;
+		if (temp == 0x04)
+			register_value &= 0xFB;
+	}
 	return ltc4306_set_register_value(dev, 0xBA, register_value);
 }
 
