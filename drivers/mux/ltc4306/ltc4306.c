@@ -1,9 +1,9 @@
 /***************************************************************************//**
  *   @file   ltc4306.c
  *   @brief  Implementation of ltc4306 Driver.
- *   @author Mihai Bancisor (Mihai.Bancisor@analog.com)
+ *   @author Janchris Espinoza (Janchris.Espinoza@analog.com)
 ********************************************************************************
- * Copyright 2012(c) Analog Devices, Inc.
+ * Copyright 2023(c) Analog Devices, Inc.
  *
  * All rights reserved.
  *
@@ -56,11 +56,10 @@
  *
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_write_register_value(struct ltc4306_dev *dev,
-				uint8_t register_address,
-				uint8_t register_value)
+int ltc4306_write_register_value(struct ltc4306_dev *dev, uint8_t register_address,
+	uint8_t register_value)
 {
-	static uint8_t write_data[2] = {0, 0};
+	uint8_t write_data[2] = {0, 0};
 
 	write_data[0] = register_address;
 	write_data[1] = register_value;
@@ -78,10 +77,10 @@ int ltc4306_write_register_value(struct ltc4306_dev *dev,
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
 
-int ltc4306_read_register_value(struct ltc4306_dev *dev,
-				   uint8_t register_address, uint8_t *register_value)
+int ltc4306_read_register_value(struct ltc4306_dev *dev,uint8_t register_address, 
+	uint8_t *register_value)
 {
-	static uint8_t read_data[2]   = {0, 0};
+	uint8_t read_data[2]   = {0, 0};
 	uint8_t ret;
 
 	read_data[0] = register_address;
@@ -109,8 +108,7 @@ int ltc4306_read_register_value(struct ltc4306_dev *dev,
  *                            0 - I2C peripheral is initialized and ltc4306
  *                                part is present.
 *******************************************************************************/
-int8_t ltc4306_init(struct ltc4306_dev **device,
-		    struct ltc4306_init_param init_param)
+int8_t ltc4306_init(struct ltc4306_dev **device, struct ltc4306_init_param init_param)
 {
 	struct ltc4306_dev *dev;
 	static uint8_t status;
@@ -151,61 +149,62 @@ int32_t ltc4306_remove(struct ltc4306_dev *dev)
  * @param init_param - The structure that contains the device initial
  * 		       parameters.
  * @param adr0_connection - Used to configure slave address. Input based on 
- * 		ADR0 connection: "l" low logic, "h" high logic, "nc" not connected
+ * 		ADR0 connection: 0 low logic, 1 high logic, 2 not connected
  * @param adr1_connection - Used to configure slave address. Input based on 
- * 		ADR1 connection: "l" low logic, "h" high logic, "nc" not connected
+ * 		ADR1 connection: 0 low logic, 1 high logic, 2 not connected
  * @param adr2_connection - Used to configure slave address. Input based on 
- * 		ADR2 connection: "l" low logic, "h" high logic, "nc" not connected
+ * 		ADR2 connection: 0 low logic, 1 high logic, 2 not connected
  * @param device_address - Stores equivalent hex device address.
  * 
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
 uint8_t ltc4306_identify_device_id(struct ltc4306_init_param init_param, 
-	char adr0_connection, char adr1_connection, char adr2_connection, *device_address)
+	uint8_t adr0_connection, uint8_t adr1_connection, 
+	uint8_t adr2_connection, uint8_t *device_address)
 {
 	//initiate variables
 	uint8_t register_input = register_address_desc;
 	uint8_t byte1 = 0;
 	uint8_t byte2 = 0;
 
-	if (adr2_connection == "l")
+	if (adr2_connection == 0)
 		byte2 = 0x80;
-	else if (adr2_connection == "nc")
+	else if (adr2_connection == 2)
 		byte2 = 0x90;
-	else if (adr2_connection == "h")
+	else if (adr2_connection == 1)
 		byte2 = 0xA0;
 	else
 		return -EINVAL;
 	
-	if (adr1_connection == "nc" && adr0_connection == "l")
+	if (adr1_connection == 2 && adr0_connection == 0)
 		byte1 = 0x00;
-	else if (adr1_connection == "h" && adr0_connection == "nc")
+	else if (adr1_connection == 1 && adr0_connection == 2)
 		byte1 = 0x02;
-	else if (adr1_connection == "nc" && adr0_connection == "nc")
+	else if (adr1_connection == 2 && adr0_connection == 2)
 		byte1 = 0x04;
-	else if (adr1_connection == "nc" && adr0_connection == "h")
+	else if (adr1_connection == 2 && adr0_connection == 1)
 		byte1 = 0x06;
-	else if (adr1_connection == "l" && adr0_connection == "l")
+	else if (adr1_connection == 0 && adr0_connection == 0)
 		byte1 = 0x08;
-	else if (adr1_connection == "h" && adr0_connection == "h")
+	else if (adr1_connection == 1 && adr0_connection == 1)
 		byte1 = 0x0A;
-	else if (adr1_connection == "l" && adr0_connection == "nc")
+	else if (adr1_connection == 0 && adr0_connection == 2)
 		byte1 = 0x0C;
-	else if (adr1_connection == "l" && adr0_connection == "h")
+	else if (adr1_connection == 0 && adr0_connection == 1)
 		byte1 = 0x0E;
 	else
 	{
-		if (adr2_connection == "h" && adr1_connection == "h" && adr0_connection == "l")
+		if (adr2_connection == 1 && adr1_connection == 1 && adr0_connection == 0)
 		{
 			*device_address = 0xB0;
 			return 0;
 		}
-		else if (adr2_connection == "l" && adr1_connection == "h" && adr0_connection == "l")
+		else if (adr2_connection == 0 && adr1_connection == 1 && adr0_connection == 0)
 		{
 			*device_address = 0xB2;
 			return 0;
 		}
-		else if (adr2_connection == "nc" && adr1_connection == "h" && adr0_connection == "l")
+		else if (adr2_connection == 2 && adr1_connection == 1 && adr0_connection == 0)
 		{
 			*device_address = 0xB4;
 			return 0;
@@ -235,9 +234,12 @@ int ltc4306_connect_to_downstream_channel(struct ltc4306_dev *dev, uint8_t conne
 	uint8_t bus_state_check;
 	uint8_t conn_req;
 	uint8_t temp_value;
+	uint8_t ret;
 
-	ltc4306_read_register_value(dev, 0x02, &conn_req);
-	ltc4306_read_register_value(dev, 0x03, &register_value);
+	ltc4306_read_register_value(dev, LTC4306_CTRL_REG2, &conn_req);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG3, &register_value);
+	if (ret)
+		return ret;
 
 	conn_req &= 0x20;
 	temp_value = register_value;
@@ -245,115 +247,99 @@ int ltc4306_connect_to_downstream_channel(struct ltc4306_dev *dev, uint8_t conne
 
 	if (conn_req == 0)
 	{
-		// first if statement masks bit depending on what bus you want to connect
-		if (connect_to_bus == 1)
+		switch (connect_to_bus)
 		{
-			ltc4306_read_bus_logic_state(dev, 1, &bus_state_check);
-			//checks bus logic state, if high, will set bus state fet high to connect to bus
+			case 1:
+				ret = ltc4306_read_bus_logic_state(dev, 1, &bus_state_check);
+				if (ret)
+					return ret;
 				if (bus_state_check == 0x08)
 				{
-					temp_value &= 0x80;
-					if (temp_value == 0x00)
+					if (! (temp_value & 0x80))
 						register_value |= 0x80;
 					
-					return ltc4306_write_register_value(dev, 0x03, register_value);
+					return ltc4306_write_register_value(dev, LTC4306_CTRL_REG3, register_value);
 				}
-				else
-				{
-					printf("Bus 1 logic state is 0. Must be logic 1 to connect.");
-					return 0;
-				}
-		}
-		else if (connect_to_bus == 2)
-		{
-			ltc4306_read_bus_logic_state(dev, 2, &bus_state_check);
+				else					
+					return -1;
+				break;
+			case 2:
+				ret = ltc4306_read_bus_logic_state(dev, 2, &bus_state_check);
+				if (ret)
+					return ret;
 				if (bus_state_check == 0x04)
 				{
-					temp_value &= 0x40;
-					if (temp_value == 0x00)
+					if (! (temp_value & 0x40))
 						register_value |= 0x40;
 					
-					return ltc4306_write_register_value(dev, 0x03, register_value);
+					return ltc4306_write_register_value(dev, LTC4306_CTRL_REG3, register_value);
 				}
 				else
-				{
-					printf("Bus 2 logic state is 0. Must be logic 1 to connect.");
-					return 0;
-				}
-		}
-		else if (connect_to_bus == 3)
-		{
-			ltc4306_read_bus_logic_state(dev, 3, &bus_state_check);
+					return -1;
+				break;
+			case 3:
+				ret = ltc4306_read_bus_logic_state(dev, 3, &bus_state_check);
+				if (ret)
+					return ret;
 				if (bus_state_check == 0x02)
 				{
-					temp_value &= 0x20;
-					if (temp_value == 0x00)
+					if (! (temp_value & 0x20))
 						register_value |= 0x20;
 					
-					return ltc4306_write_register_value(dev, 0x03, register_value);
+					return ltc4306_write_register_value(dev, LTC4306_CTRL_REG3, register_value);
 				}
 				else
-				{
-					printf("Bus 3 logic state is 0. Must be logic 1 to connect.");
-					return 0;
-				}
-		}
-		else if (connect_to_bus == 4)
-		{
-			ltc4306_read_bus_logic_state(dev, 4, &bus_state_check);
+					return -1;
+				break;
+			case 4:
+				ret = ltc4306_read_bus_logic_state(dev, 4, &bus_state_check);
+				if (ret)
+					return ret;
 				if (bus_state_check == 0x01)
 				{
-					temp_value &= 0x10;
-					if (temp_value == 0x00)
+					if (! (temp_value & 0x10))
 						register_value |= 0x10;
 					
-					return ltc4306_write_register_value(dev, 0x03, register_value);
+					return ltc4306_write_register_value(dev, LTC4306_CTRL_REG3, register_value);
 				}
 				else
-				{
-					printf("Bus 4 logic state is 0. Must be logic 1 to connect.");
-					return 0;
-				}
+					return -1;
+				break;
+			default:
+				return -EINVAL;
 		}
-		else
-			return -EINVAL;
 	}
 	else
 	{
-		if (connect_to_bus == 1)
+		switch (connect_to_bus)
 		{
-			temp_value &= 0x80;
-			if (temp_value == 0x00)
-				register_value |= 0x80;
-			
-			return ltc4306_write_register_value(dev, 0x03, register_value);
+			case 1:
+				if (! (temp_value & 0x80))
+					register_value |= 0x80;
+				
+				return ltc4306_write_register_value(dev, LTC4306_CTRL_REG3, register_value);
+				break;
+			case 2:
+				if (! (temp_value & 0x40))
+					register_value |= 0x40;
+				
+				return ltc4306_write_register_value(dev, LTC4306_CTRL_REG3, register_value);
+				break;
+			case 3:
+				if (! (temp_value & 0x20))
+					register_value |= 0x20;
+				
+				return ltc4306_write_register_value(dev, LTC4306_CTRL_REG3, register_value);
+				break;
+			case 4:
+				if (! (temp_value & 0x10))
+					register_value |= 0x10;
+				
+				return ltc4306_write_register_value(dev, LTC4306_CTRL_REG3, register_value);
+				break;
+			default:
+				return -EINVAL;
 		}
-		else if (connect_to_bus == 2)
-		{
-			temp_value &= 0x40;
-			if (temp_value == 0x00)
-				register_value |= 0x40;
-			
-			return ltc4306_write_register_value(dev, 0x03, register_value);
-		}
-		else if (connect_to_bus == 3)
-		{
-			temp_value &= 0x20;
-			if (temp_value == 0x00)
-				register_value |= 0x20;
-			
-			return ltc4306_write_register_value(dev, 0x03, register_value);
-		}
-		else if (connect_to_bus == 4)
-		{
-			temp_value &= 0x80;
-			if (temp_value == 0x00)
-				register_value |= 0x80;
-			
-			return ltc4306_write_register_value(dev, 0x03, register_value);
-		}
-		else
-			return -EINVAL;
 	}
 }
 
@@ -368,18 +354,22 @@ int ltc4306_connect_to_downstream_channel(struct ltc4306_dev *dev, uint8_t conne
  *
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_upstream_downstream_accelerator_en(struct ltc4306_dev *dev, bool upstream_en, bool downstream_en)
+int ltc4306_upstream_downstream_accelerator_en(struct ltc4306_dev *dev, 
+	bool upstream_en, bool downstream_en)
 {
 	static uint8_t write_data;
 	uint8_t temp = 0;
+	uint8_t ret;
 
-	ltc4306_read_register_value(dev, 0x01, &write_data);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG1, &write_data);
+	if (ret)
+		return ret;
+
 	temp = write_data;
 
-	if (upstream_en == true)
+	if (upstream_en)
 	{
-		temp &= 0x80;
-		if (temp == 0x00)
+		if (! (temp & 0x80))
 			write_data |= 0x80;
 	}
 	else
@@ -389,10 +379,9 @@ int ltc4306_upstream_downstream_accelerator_en(struct ltc4306_dev *dev, bool ups
 			write_data &= 0x7F;
 	}
 
-	if (downstream_en == true)
+	if (downstream_en)
 	{
-		temp &= 0x40;
-		if (temp == 0x00)
+		if (! (temp & 0x40))
 			write_data |= 0x40;
 	}
 	else
@@ -401,32 +390,7 @@ int ltc4306_upstream_downstream_accelerator_en(struct ltc4306_dev *dev, bool ups
 		if (temp == 0x40)
 			write_data &= 0xBF;
 	}
-	return ltc4306_write_register_value(dev, 0x01, write_data);
-}
-
-/***************************************************************************//**
- * @brief Performs Alert Response Address Protocol.
- *
- * @param dev - The device structure.
- * @param device_address - Address of slave device that sent interrupt signal.
- * @param register_value - Stores data read from device address.
- *
- * @return 0 in case of success, negative error code otherwise.
-*******************************************************************************/
-int ltc4306_alert_response(struct ltc4306_dev *dev, uint8_t device_address, uint8_t *register_value)
-{
-	uint8_t read_data[2] = {0, 0};
-	uint8_t ret;
-	read_data[0] = 0x19;
-	read_data[1] = device_address;
-
-	ret = no_os_i2c_write(dev->i2c_desc, read_data, 1, 0);
-	if (ret)
-		return ret;
-
-	*register_value = no_os_i2c_read(dev->i2c_desc, read_data, 1, 1);
-
-	return register_value;
+	return ltc4306_write_register_value(dev, LTC4306_CTRL_REG1, write_data);
 }
 
 /***************************************************************************//**
@@ -441,8 +405,11 @@ int ltc4306_mass_write_en(struct ltc4306_dev *dev, bool mass_write_en)
 {
 	uint8_t register_value;
 	uint8_t temp;
+	uint8_t ret;
 
-	ltc4306_read_register_value(dev, 0x02, &register_value);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG2, &register_value);
+	if (ret)
+		return ret;		
 
 	temp = register_value;
 	temp &= 0x04;
@@ -457,7 +424,7 @@ int ltc4306_mass_write_en(struct ltc4306_dev *dev, bool mass_write_en)
 		if (temp == 0x04)
 			register_value &= 0xFB;
 	}
-	return ltc4306_write_register_value(dev, 0xBA, register_value);
+	return ltc4306_write_register_value(dev, LTC4306_MASS_WRITE_ADDR, register_value);
 }
 
 /***************************************************************************//**
@@ -465,80 +432,84 @@ int ltc4306_mass_write_en(struct ltc4306_dev *dev, bool mass_write_en)
  * 		output mode, it can be configured as open-drain or push-pull.
  *
  * @param dev - The device structure.
- * @param gpio1_mode_config - Set true to configure GPIO1 to input mode; 
+ * @param gpio1_is_input - Set true to configure GPIO1 to input mode; 
  * 		false for output mode.
- * @param gpio2_mode_config - Set true to configure GPIO2 to input mode; 
+ * @param gpio2_is_input - Set true to configure GPIO2 to input mode; 
  * 		false for output mode.
- * @param gpio1_output_mode_config - Set true to configure GPIO1 output mode 
+ * @param gpio1_is_pushpull - Set true to configure GPIO1 output mode 
  * 		to push-pull; false for open-drain pull-down.
- * @param gpio2_output_mode_config - Set true to configure GPIO2 output mode 
+ * @param gpio2_is_pushpull - Set true to configure GPIO2 output mode 
  * 		to push-pull; false for open-drain pull-down.
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_gpio_mode_configure(struct ltc4306_dev *dev, bool gpio1_mode_config, bool gpio2_mode_config, 
-								bool gpio1_output_mode_config, bool gpio2_output_mode_config)
+int ltc4306_gpio_mode_configure(struct ltc4306_dev *dev, bool gpio1_is_input, 
+	bool gpio2_is_input, bool gpio1_is_pushpull, bool gpio2_is_pushpull)
 {
-	uint8_t register_address = 0x02;
-	uint8_t register_value = 0;
+	uint8_t register_value;
+	uint8_t ret;
 
-	register_value = ltc4306_read_register_value(dev, register_address);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG2, &register_value);
+	if (ret)
+		return ret;
 	
-	if (gpio1_mode_config)
+	if (gpio1_is_input)
+		register_value &= 0x7F;
+	else
 	{
 		register_value |= 0x80;
-		if (gpio1_output_mode_config)
+		if (gpio1_is_pushpull)
 			register_value |= 0x10;
 		else
 			register_value &= 0xEF;
 	}
-	else 
-		register_value &= 0x6F;
 	
-	if (gpio2_mode_config)
+	if (gpio2_is_input)
+		register_value &= 0xBF;
+	else
 	{
 		register_value |= 0x40;
-		if (gpio2_output_mode_config)
+		if (gpio2_is_pushpull)
 			register_value |= 0x08;
 		else
 			register_value &= 0xF7;
 	}
-	else 
-		register_value &= 0xB7;
 	
-	return ltc4306_write_register_value(dev, register_address, register_value);
+	return ltc4306_write_register_value(dev, LTC4306_CTRL_REG2, register_value);
 }
 
 /***************************************************************************//**
  * @brief Sets Connection Requirement bit.
  *
  * @param dev - The device structure.
- * @param connection_requirement_bit - Set true to configure controller to
- * 		connect to downstream bus regardless of bus logic state; otherwise,
- * 		set false.
+ * @param connect_regardless - Set true to configure controller to connect to
+ * 		downstream bus regardless of bus logic state; otherwise, set false.
  * 
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_set_connection_requirement(struct ltc4306_dev *dev, bool connection_requirement_bit)
+int ltc4306_set_connection_requirement(struct ltc4306_dev *dev, bool connect_regardless)
 {
 	uint8_t register_value;
 	uint8_t temp;
+	uint8_t ret;
 
-	ltc4306_read_register_value(dev, 0x02, &register_value);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG2, &register_value);
+	if (ret)
+		return ret;
+
 	temp = register_value;
-	temp &= 0x20;
 	
-	if (connection_requirement_bit)
+	if (connect_regardless)
 	{
-		if (temp == 0x00)
+		if (! (temp & 0x20))
 			register_value |= 0x20;
 	}
 	else
 	{
-		if (temp == 0x20)
+		if (temp & 0x20)
 			register_value &= 0xDF;
 	}
 
-	return ltc4306_write_register_value(dev, 0x02, register_value);
+	return ltc4306_write_register_value(dev, LTC4306_CTRL_REG2, register_value);
 }
 
 /***************************************************************************//**
@@ -546,45 +517,48 @@ int ltc4306_set_connection_requirement(struct ltc4306_dev *dev, bool connection_
  *
  * @param dev - The device structure.
  * @param bus_number - Selects what bus to read (any number from 1 to 4)
- * @param logic_state - Stores logic state of selected bus.
+ * @param is_high - Stores logic state of selected bus (true = high, false = low).
  * 
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_read_bus_logic_state(struct ltc4306_dev *dev, uint8_t bus_number, uint8_t *logic_state)
+int ltc4306_read_bus_logic_state(struct ltc4306_dev *dev, uint8_t bus_number, bool *is_high)
 {
 	uint8_t temp;
 	uint8_t bus_logic_state;
+	uint8_t ret;
+	
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG3, &temp);
+	if (ret)
+		return ret;
 
-	ltc4306_read_register_value(dev, 0x03, &temp);
 	bus_logic_state = temp;
 	bus_logic_state &= 0x0F;
 
-	if (bus_number == 1)
+	switch (bus_number)
 	{
-		bus_logic_state &= 0x08;
-		*logic_state = bus_logic_state;
-		return 0;
+		case 1:
+			bus_logic_state &= 0x08;
+			*is_high = bus_logic_state;
+			return 0;
+			break;
+		case 2:
+			bus_logic_state &= 0x04;
+			*is_high = bus_logic_state;
+			return 0;
+			break;
+		case 3:
+			bus_logic_state &= 0x02;
+			*is_high = bus_logic_state;
+			return 0;
+			break;
+		case 4:
+			bus_logic_state &= 0x01;
+			*is_high = bus_logic_state;
+			return 0;
+			break;
+		default:
+			return -EINVAL;
 	}
-	else if (bus_number == 2)
-	{
-		bus_logic_state &= 0x04;
-		*logic_state = bus_logic_state;
-		return 0;
-	}
-	else if (bus_number == 3)
-	{
-		bus_logic_state &= 0x02;
-		*logic_state = bus_logic_state;
-		return 0;
-	}
-	elseif (bus_number == 4)
-	{
-		bus_logic_state &= 0x01;
-		*logic_state = bus_logic_state;
-		return 0;
-	}
-	else
-		return -EINVAL;
 }
 
 /***************************************************************************//**
@@ -592,17 +566,21 @@ int ltc4306_read_bus_logic_state(struct ltc4306_dev *dev, uint8_t bus_number, ui
  * 		connected to any downstream buses.
  *
  * @param dev - The device structure.
- * @param register_value - stores Downstream Connected bit value.
+ * @param is_high - stores Downstream Connected bit value (true = high, false = low).
  * 
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_read_downstream_connected_bit(struct ltc4306_dev *dev, uint8_t *register_value)
+int ltc4306_read_downstream_connected_bit(struct ltc4306_dev *dev, bool *is_high)
 {
 	uint8_t temp;
+	uint8_t ret;
 
-	ret = ltc4306_read_register_value(dev, 0x00, &temp);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG0, &temp);
+	if (ret)
+		return ret;
+
 	temp &= 0x80;
-	*register_value = temp;
+	*is_high = temp;
 
 	return 0;
 }
@@ -612,38 +590,39 @@ int ltc4306_read_downstream_connected_bit(struct ltc4306_dev *dev, uint8_t *regi
  *
  * @param dev - The device structure.
  * @param alert_pin_number - Sets ALERT pin to be read.
- * @param register_value - Stores value of selected ALERT pin.
+ * @param is_high - Stores value of selected ALERT pin (true = high, false = low).
  * 
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_read_alert_logic_state(struct ltc4306_dev *dev, uint8_t alert_pin_number, uint8_t *register_value)
+int ltc4306_read_alert_logic_state(struct ltc4306_dev *dev, uint8_t alert_pin_number, bool *is_high)
 {
 	uint8_t temp;
+	uint8_t ret;
 
 	if (alert_pin_number < 0 || alert_pin_number > 4)
 		return -EINVAL;
 
-	ltc4306_read_register_value(dev, 0x00, &temp);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG0, &temp);
+	if (ret)
+		return ret;
 	
-	if (alert_pin_number == 1)
+	switch (alert_pin_number)
 	{
-		temp &= 0x40;
-		*register_value = temp;
-	}
-	else if (alert_pin_number == 2)
-	{
-		temp &= 0x20;
-		*register_value = temp;
-	}
-	else if (alert_pin_number == 3)
-	{
-		temp &= 0x10;
-		*register_value = temp;
-	}
-	else
-	{
-		temp &= 0x08;
-		*register_value = temp;
+		case 1:
+			temp &= 0x40;
+			*is_high = temp;
+			break;
+		case 2:
+			temp &= 0x20;
+			*is_high = temp;
+			break;
+		case 3:
+			temp &= 0x10;
+			*is_high = temp;
+			break;
+		default:
+			temp &= 0x08;
+			*is_high = temp;
 	}
 
 	return 0;
@@ -653,17 +632,22 @@ int ltc4306_read_alert_logic_state(struct ltc4306_dev *dev, uint8_t alert_pin_nu
  * @brief Reads Failed Connection Attempt bit.
  *
  * @param dev - The device structure.
- * @param register_value - Stores value of Failed Connection Attempt bit.
+ * @param is_high - Stores value of Failed Connection Attempt bit (true = high,
+ * 		false = low).
  * 
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_read_failed_connection_attempt_bit(struct ltc4306_dev *dev, uint8_t *register_value)
+int ltc4306_read_failed_connection_attempt_bit(struct ltc4306_dev *dev, bool *is_high)
 {
 	uint8_t temp;
+	uint8_t ret;
 
-	ltc4306_read_register_value(dev, 0x00, &temp);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG0, &temp);
+	if (ret)
+		return ret;
+
 	temp &= 0x04;
-	*register_value = temp;
+	*is_high = temp;
 
 	return 0;
 }
@@ -672,17 +656,21 @@ int ltc4306_read_failed_connection_attempt_bit(struct ltc4306_dev *dev, uint8_t 
  * @brief Reads Latched Timeout bit.
  *
  * @param dev - The device structure.
- * @param register_value - Stores value of Latched Timeout bit.
+ * @param is_high - Stores value of Latched Timeout bit (true = high, false = low).
  * 
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_read_latched_timeout_bit(struct ltc4306_dev *dev, uint8_t *register_value)
+int ltc4306_read_latched_timeout_bit(struct ltc4306_dev *dev, bool *is_high)
 {
 	uint8_t temp;
+	uint8_t ret;
 
-	ltc4306_read_register_value(dev, 0x00, &temp);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG0, &temp);
+	if (ret)
+		return ret;
+
 	temp &= 0x02;
-	*register_value = temp;
+	*is_high = temp;
 
 	return 0;
 }
@@ -692,34 +680,44 @@ int ltc4306_read_latched_timeout_bit(struct ltc4306_dev *dev, uint8_t *register_
  *
  * @param dev - The device structure.
  * @param timeout_mode_value - Input one of the following:
- * 		0x00	Timeout Disabled
- * 		0x01	Timeout after 30ns
- * 		0x10	Timeout after 15ms
- * 		0x11	Timeout after 7.5ms
+ * 		0b00	Timeout Disabled
+ * 		0b01	Timeout after 30ns
+ * 		0b10	Timeout after 15ms
+ * 		0b11	Timeout after 7.5ms
  * 
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
 int ltc4306_set_timeout_mode(struct ltc4306_dev *dev, uint8_t timeout_mode_value)
 {
 	uint8_t register_value;
+	uint8_t ret;
 
-	if (timeout_mode_value != 0x00 || timeout_mode_value != 0x01 ||
-		timeout_mode_value != 0x10 || timeout_mode_value != 0x11)
+	if (timeout_mode_value != 0b00 || timeout_mode_value != 0b01 ||
+		timeout_mode_value != 0b10 || timeout_mode_value != 0b11)
 		return -EINVAL;
 	
-	ltc4306_read_register_value(dev, 0x02, &register_value);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG2, &register_value);
+	if (ret)
+		return ret;
+
 	register_value &= 0xFC;
 	
-	if (timeout_mode_value == 0x11)
-		register_value |= 0x11;
-	else if (timeout_mode_value == 0x10)
-		register_value |= 0x10;
-	else if (timeout_mode_value == 0x01)
-		register_value |= 0x01;
-	else 
-		return ltc4306_write_register_value(dev, 0x02, register_value);
+	switch (timeout_mode_value)
+	{
+		case 0b11:
+			register_value |= 0x11;
+			break;
+		case 0b10:
+			register_value |= 0x10;
+			break;
+		case 0b01:
+			register_value |= 0x01;
+			break;
+		default:
+			return ltc4306_write_register_value(dev, LTC4306_CTRL_REG2, register_value);
+	}
 		
-	return ltc4306_write_register_value(dev, 0x02, register_value);
+	return ltc4306_write_register_value(dev, LTC4306_CTRL_REG2, register_value);
 }
 
 /***************************************************************************//**
@@ -734,8 +732,12 @@ int ltc4306_set_timeout_mode(struct ltc4306_dev *dev, uint8_t timeout_mode_value
 int ltc4306_read_gpio_logic_state(struct ltc4306_dev *dev, uint8_t *register_value)
 {
 	uint8_t temp;
+	uint8_t ret;
 
-	ltc4306_read_register_value(dev, 0x01, &temp);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG1, &temp);
+	if (ret)
+		return ret;
+
 	temp &= 0x03;
 	*register_value = temp;
 
@@ -746,36 +748,47 @@ int ltc4306_read_gpio_logic_state(struct ltc4306_dev *dev, uint8_t *register_val
  * @brief Sets GPIO Output Driver state.
  *
  * @param dev - The device structure.
- * @param gpio1_gpio2_value - Input sets GPIO driver state.
- * 		(e.g. gpio1_gpio2_value = 0x01; 0 = GPIO1 state, 1 = GPIO2 state)
+ * @param gpio1_is_high - Sets GPIO1 driver state to either high or low
+ * 		(true = high, false = low).
+ * @param gpio2_is_high - Sets GPIO2 driver state to either high or low
+ * 		(true = high, false = low).
  * 
  * @return 0 in case of success, negative error code otherwise.
 *******************************************************************************/
-int ltc4306_write_gpio_output_state(struct ltc4306_dev *dev, uint8_t gpio1_gpio2_value)
+int ltc4306_write_gpio_output_state(struct ltc4306_dev *dev, bool gpio1_is_high, bool gpio2_is_high)
 {
 	uint8_t register_value;
 	uint8_t temp;
+	uint8_t ret;
 
-	ltc4306_read_register_value(dev, 0x01, &register_value);
+	ret = ltc4306_read_register_value(dev, LTC4306_CTRL_REG1, &register_value);
+	if (ret)
+		return ret;
+
 	register_value &= 0xCF;
 
-	if (gpio1_gpio2_value == 0x00)
-		return ltc4306_write_register_value(dev, 0x01, register_value);
-	else if (gpio1_gpio2_value == 0x01)
+	if (gpio1_is_high)
 	{
-		register_value |= 0x10;
-		return ltc4306_write_register_value(dev, 0x01, register_value);
-	}
-	else if (gpio1_gpio2_value == 0x10)
-	{
-		register_value |= 0x20;
-		return ltc4306_write_register_value(dev, 0x01, register_value);
-	}
-	else if (gpio1_gpio2_value == 0x11)
-	{
-		register_value |= 0x30;
-		return ltc4306_write_register_value(dev, 0x01, register_value);
+		if (gpio2_is_high)
+		{
+			register_value |= 0x30;
+			return ltc4306_write_register_value(dev, LTC4306_CTRL_REG1, register_value);
+		}
+		else
+		{
+			register_value |= 0x20;
+			return ltc4306_write_register_value(dev, LTC4306_CTRL_REG1, register_value);
+		}
 	}
 	else
-		return -EINVAL;
+	{
+		if (gpio2_is_high)
+		{
+			register_value |= 0x10;
+			return ltc4306_write_register_value(dev, LTC4306_CTRL_REG1, register_value);
+		}
+		else
+			return ltc4306_write_register_value(dev, LTC4306_CTRL_REG1, register_value);
+	}
+
 }

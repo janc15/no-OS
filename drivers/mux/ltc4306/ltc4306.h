@@ -1,9 +1,9 @@
 /***************************************************************************//**
  *   @file   LTC4306.h
  *   @brief  Header file of LTC4306 Driver.
- *   @author Mihai Bancisor (Mihai.Bancisor@analog.com)
+ *   @author Janchris Espinoza (Janchris.Espinoza@analog.com)
 ********************************************************************************
- * Copyright 2012(c) Analog Devices, Inc.
+ * Copyright 2023(c) Analog Devices, Inc.
  *
  * All rights reserved.
  *
@@ -49,45 +49,17 @@
 /************************** LTC4306 Definitions *******************************/
 /******************************************************************************/
 
-#define PMOD_IOXP_J1		0	// J1 port of PmodIOXP
-#define PMOD_IOXP_J2		1	// J2 port of PmodIOXP
-#define LTC4306_ADDRESS		0x34	// I2C ADDRESS
-#define LTC4306_ID		0x10	// Manufacturer ID
+//#define LTC4306_ADDRESS		0x34	// I2C ADDRESS
+//#define LTC4306_ID			0x10	// Manufacturer ID
 
 /* Register address definitions */
 #define LTC4306_CTRL_REG0				0x00
 #define LTC4306_CTRL_REG1		       	0x01
 #define LTC4306_CTRL_REG2           	0x02
 #define LTC4306_CTRL_REG3            	0x03
-#define LTC4306_MASS_WRITE            	0xBA
-#define LTC4306_ALERT_RESPONSE          0x19
-#define LTC4306_0		            	0x80
-#define LTC4306_1		            	0x82
-#define LTC4306_2		            	0x84
-#define LTC4306_3		            	0x86
-#define LTC4306_4		            	0x88
-#define LTC4306_5		            	0x8A
-#define LTC4306_6		            	0x8C
-#define LTC4306_7		            	0x8E
-#define LTC4306_8		            	0x90
-#define LTC4306_9		            	0x92
-#define LTC4306_10		            	0x94
-#define LTC4306_11		            	0x96
-#define LTC4306_12		            	0x98
-#define LTC4306_13		            	0x9A
-#define LTC4306_14		            	0x9C
-#define LTC4306_15		            	0x9E
-#define LTC4306_16		            	0xA0
-#define LTC4306_17		            	0xA2
-#define LTC4306_18		            	0xA4
-#define LTC4306_19		            	0xA6
-#define LTC4306_20		            	0xA8
-#define LTC4306_21		            	0xAA
-#define LTC4306_22		            	0xAC
-#define LTC4306_23		            	0xAE
-#define LTC4306_24		            	0xB0
-#define LTC4306_25		            	0xB2
-#define LTC4306_26		            	0xB4
+#define LTC4306_MASS_WRITE_ADDR         0xBA
+#define LTC4306_ALERT_RESPONSE_ADDR     0x19
+
 
 /******************************************************************************/
 /*************************** Types Declarations *******************************/
@@ -109,38 +81,84 @@ struct LTC4306_init_param {
 /******************************************************************************/
 
 /*! Writes data into a register. */
-void LTC4306_set_register_value(struct LTC4306_dev *dev,
+int ltc4306_write_register_value(struct ltc4306_dev *dev,
 				uint8_t register_address,
 				uint8_t register_value);
 
 /*! Reads the value of a register. */
-uint8_t LTC4306_get_register_value(struct LTC4306_dev *dev,
-				   uint8_t register_address);
+int ltc4306_read_register_value(struct ltc4306_dev *dev,
+				   uint8_t register_address, uint8_t *register_value);
 
 /*! Initializes the communication peripheral and checks if the LTC4306
 	part is present. */
-int8_t LTC4306_init(struct LTC4306_dev **device,
-		    struct LTC4306_init_param init_param);
+int8_t ltc4306_init(struct ltc4306_dev **device,
+		    struct ltc4306_init_param init_param);
 
 /*! Free the resources allocated by LTC4306_init(). */
-int32_t LTC4306_remove(struct LTC4306_dev *dev);
+int32_t ltc4306_remove(struct ltc4306_dev *dev);
 
-/*! Sets the direction of the pins. */
-void LTC4306_gpio_direction(struct LTC4306_dev *dev,
-			    uint8_t reg,
-			    uint8_t val);
+/*! Gives the equivalent hex device address based on the input combination
+ * 		of ADR0, ADR1, and ADR2. (27 possible device address) */
+uint8_t ltc4306_identify_device_id(struct ltc4306_init_param init_param, 
+	uint8_t adr0_connection, uint8_t adr1_connection, uint8_t adr2_connection, 
+	*device_address);
 
-/*! Reads the state of the pins. */
-uint8_t LTC4306_get_pin_state(struct LTC4306_dev *dev,
-			      uint8_t reg);
+/*! Connects to a downstream bus. Bus logic state must be 1 for connection
+ * 		to occur EXCEPT when conn_req is 1. Controller will connect to 
+ * 		downstream bus regardless of its logic state if conn_req is 1. */
+int ltc4306_connect_to_downstream_channel(struct ltc4306_dev *dev, 
+	uint8_t connect_to_bus);
 
 /*! Sets the state of the pins.*/
 void LTC4306_set_pin_state(struct LTC4306_dev *dev,
-			   uint8_t reg,
-			   uint8_t state);
+			   uint8_t reg, uint8_t state);
 
-/*! Initializes keyboard decoder. */
-void LTC4306_init_key(struct LTC4306_dev *dev,
-		      uint8_t pmod_port);
+/*! Enables and disables upstream and downstream accelerator. */
+int ltc4306_upstream_downstream_accelerator_en(struct ltc4306_dev *dev, 
+	bool upstream_en, bool downstream_en);
+
+/* Enables Mass Write Adddress. */
+int ltc4306_mass_write_en(struct ltc4306_dev *dev, bool mass_write_en);
+
+/* Configures GPIO1 and GPIO2 as input or output mode. If selected as
+ * 		output mode, it can be configured as open-drain or push-pull. */
+int ltc4306_gpio_mode_configure(struct ltc4306_dev *dev, bool gpio1_is_input, 
+	bool gpio2_is_input, bool gpio1_is_pushpull, bool gpio2_is_pushpull);
+
+/* Sets Connection Requirement bit. */
+int ltc4306_set_connection_requirement(struct ltc4306_dev *dev, 
+	bool connect_regardless);
+
+/* Reads bus logic state. */
+int ltc4306_read_bus_logic_state(struct ltc4306_dev *dev, uint8_t bus_number, 
+	bool *is_high);
+
+/* Reads Downstream Connected bit; indicates if upstream bus is
+ * 		connected to any downstream buses. */
+int ltc4306_read_downstream_connected_bit(struct ltc4306_dev *dev, 
+	bool *is_high);
+
+/* Reads Alert Logic State of ALERT pins. */
+int ltc4306_read_alert_logic_state(struct ltc4306_dev *dev, 
+	uint8_t alert_pin_number, bool *is_high);
+
+/* Reads Failed Connection Attempt bit. */
+int ltc4306_read_failed_connection_attempt_bit(struct ltc4306_dev *dev, 
+	bool *is_high);
+
+/* Reads Latched Timeout bit. */
+int ltc4306_read_latched_timeout_bit(struct ltc4306_dev *dev, bool *is_high);
+
+/* Sets Timeout Mode bit 0 and bit 1. */
+int ltc4306_set_timeout_mode(struct ltc4306_dev *dev, 
+	uint8_t timeout_mode_value);
+
+/* Reads GPIO1 and GPIO 2 logic states. */
+int ltc4306_read_gpio_logic_state(struct ltc4306_dev *dev, 
+	uint8_t *register_value);
+
+/* Sets GPIO Output Driver state. */
+int ltc4306_write_gpio_output_state(struct ltc4306_dev *dev, bool gpio1_is_high, 
+	bool gpio2_is_high);
 
 #endif	/* __LTC4306_H__ */
